@@ -1,10 +1,7 @@
 package tree;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class arvoreB<Elemento>{
     private Nodo raiz = null;
@@ -540,6 +537,52 @@ public class arvoreB<Elemento>{
 
     }
 
+    private Set<String> coletarEmpresas(Nodo node) {
+        Set<String> empresas = new HashSet<>();
+        processarNodoParaColetarEmpresas(node, empresas);
+        return empresas;
+    }
+
+    private void processarNodoParaColetarEmpresas(Nodo node, Set<String> empresas) {
+        if (node == null) return;
+
+        for (dados.Elemento elemento : node.getChave()) {
+            empresas.add(elemento.getEmpresa());
+        }
+
+        for (Nodo filho : node.getFilho()) {
+            processarNodoParaColetarEmpresas(filho, empresas);
+        }
+    }
+
+    public void printarMediaTempoEmp() {
+        Set<String> empresas = coletarEmpresas(raiz);
+        if (empresas.isEmpty()) {
+            System.out.println("Nenhuma empresa encontrada.");
+            return;
+        }
+
+        System.out.println("Selecione uma empresa:");
+        int index = 1;
+        List<String> empresasList = new ArrayList<>(empresas);
+        for (String empresa : empresasList) {
+            System.out.println(index + ". " + empresa);
+            index++;
+        }
+
+        Scanner scanner = new Scanner(System.in);
+        int opcao = scanner.nextInt();
+
+        if (opcao < 1 || opcao > empresasList.size()) {
+            System.out.println("Opção inválida.");
+            return;
+        }
+
+        String empresaSelecionada = empresasList.get(opcao - 1);
+        System.out.println("Empresa selecionada: " + empresaSelecionada);
+
+        analisarTarifasAereasAnoMesParaEmpresa(raiz, empresaSelecionada);
+    }
 
 
 
@@ -711,6 +754,77 @@ public class arvoreB<Elemento>{
             processarNodoRecursivo(filho, elementosPorEmpresa);
         }
     }
+
+    public void analisarTarifasAereasAnoMesParaEmpresa(Nodo node, String empresaSelecionada) {
+        // Agrupar elementos por ano e mês para a empresa selecionada
+        Map<Integer, Map<Integer, List<dados.Elemento>>> elementosPorAnoEMes = new HashMap<>();
+
+        // Método auxiliar para processar os nós recursivamente
+        processarNodoRecursivoTimeParaEmpresa(node, elementosPorAnoEMes, empresaSelecionada);
+
+        // Calcular a média das tarifas por ano e mês
+        Map<String, Double> mediaTarifasPorAnoEMes = new HashMap<>();
+        for (Map.Entry<Integer, Map<Integer, List<dados.Elemento>>> anoEntry : elementosPorAnoEMes.entrySet()) {
+            int ano = anoEntry.getKey();
+            for (Map.Entry<Integer, List<dados.Elemento>> mesEntry : anoEntry.getValue().entrySet()) {
+                int mes = mesEntry.getKey();
+                List<dados.Elemento> elementosDoMes = mesEntry.getValue();
+                double somaTarifas = 0;
+                for (dados.Elemento e : elementosDoMes) {
+                    somaTarifas += e.getTarifa();
+                }
+                double mediaTarifas = somaTarifas / elementosDoMes.size();
+                String anoMesKey = String.format("%d-%02d", ano, mes);
+                mediaTarifasPorAnoEMes.put(anoMesKey, mediaTarifas);
+            }
+        }
+
+        // Encontrar o ano e mês com a tarifa média mais baixa e mais alta
+        String anoMesTarifaMaisBaixa = null;
+        String anoMesTarifaMaisAlta = null;
+        double menorTarifa = Double.MAX_VALUE;
+        double maiorTarifa = Double.MIN_VALUE;
+
+        for (Map.Entry<String, Double> entry : mediaTarifasPorAnoEMes.entrySet()) {
+            String anoMes = entry.getKey();
+            double mediaTarifa = entry.getValue();
+            if (mediaTarifa < menorTarifa) {
+                menorTarifa = mediaTarifa;
+                anoMesTarifaMaisBaixa = anoMes;
+            }
+            if (mediaTarifa > maiorTarifa) {
+                maiorTarifa = mediaTarifa;
+                anoMesTarifaMaisAlta = anoMes;
+            }
+        }
+
+        // Imprimir os resultados
+        System.out.println("Média das tarifas por ano e mês para a empresa " + empresaSelecionada + ":");
+        for (Map.Entry<String, Double> entry : mediaTarifasPorAnoEMes.entrySet()) {
+            System.out.printf("Ano-Mês: %s, Média de Tarifa: %.2f%n", entry.getKey(), entry.getValue());
+        }
+
+        System.out.printf("\nAno e mês com a tarifa média mais baixa: %s (Tarifa: %.2f)%n", anoMesTarifaMaisBaixa, menorTarifa);
+        System.out.printf("Ano e mês com a tarifa média mais alta: %s (Tarifa: %.2f)%n", anoMesTarifaMaisAlta, maiorTarifa);
+    }
+    private void processarNodoRecursivoTimeParaEmpresa(Nodo node, Map<Integer, Map<Integer, List<dados.Elemento>>> elementosPorAnoEMes, String empresaSelecionada) {
+        if (node == null) return;
+
+        for (dados.Elemento elemento : node.getChave()) {
+            if (elemento.getEmpresa().equals(empresaSelecionada)) {
+                int ano = elemento.getAno();
+                int mes = elemento.getMes();
+                elementosPorAnoEMes.computeIfAbsent(ano, k -> new HashMap<>())
+                        .computeIfAbsent(mes, k -> new ArrayList<>())
+                        .add(elemento);
+            }
+        }
+
+        for (Nodo filho : node.getFilho()) {
+            processarNodoRecursivoTimeParaEmpresa(filho, elementosPorAnoEMes, empresaSelecionada);
+        }
+    }
+
 
 
 

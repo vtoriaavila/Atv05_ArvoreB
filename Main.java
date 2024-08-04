@@ -65,6 +65,7 @@ public class Main {
                     System.out.println("1- Media geral");
                     System.out.println("2- Media por empresa");
                     System.out.println("3- Media por tempo");
+                    System.out.println("4- Media tempo por empresa");
                     int escolha = scanner.nextInt();
                     switch (escolha) {
                         case 1:
@@ -77,6 +78,9 @@ public class Main {
 
                         case 3:
                             bTree.printarMediaTemp();
+                            break;
+                        case 4:
+                            bTree.printarMediaTempoEmp();
                             break;
 
                     };
