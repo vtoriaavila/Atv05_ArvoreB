@@ -19,6 +19,7 @@ public class Main {
         arvoreB<Elemento> bTree = new arvoreB<>(3); // Cria uma árvore B de ordem 3
         List<String> arquivosCsv = new ArrayList<>();
 
+
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(Paths.get("src/dados/anac_174932488"), "*.CSV")) {
             for (Path entry : stream) {
                 arquivosCsv.add(entry.toString());
@@ -26,6 +27,7 @@ public class Main {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
 //        arquivosCsv.add("src/dados/anac_174932488/202406.CSV");
 
         // Ler e inserir elementos de cada arquivo CSV
@@ -42,6 +44,7 @@ public class Main {
             System.out.println("2. Calcular média");
             System.out.println("3. Imprimir a árvore");
             System.out.println("4. Sair");
+
             System.out.print("Escolha uma opção: ");
 
             int choice = scanner.nextInt();
@@ -76,19 +79,21 @@ public class Main {
                             bTree.printarMediaTemp();
                             break;
 
-
                     };
 
                     break;
 
                 case 3:
+
                     System.out.println("Imprimindo a árvore:");
                     bTree.printarArvore();
-//                    bTree.imprimirParaArquivo("src/dados/arquivoSaida.txt");
 
-                    //ler.lerCsv(arquivoCsv);
+
                     break;
+
+
                 case 4:
+
                     System.out.println("Saindo...");
                     scanner.close();
                     return;

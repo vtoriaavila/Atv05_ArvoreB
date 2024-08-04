@@ -539,6 +539,10 @@ public class arvoreB<Elemento>{
         analisarTarifasAereasAnoMes(raiz);
 
     }
+
+
+
+
     public double calcularMediaTarifas() {
         float[] resultado = calcularSomaETotalTarifas(raiz);
         float soma = resultado[0];
