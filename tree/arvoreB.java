@@ -1,9 +1,10 @@
 package tree;
 
-import dados.Elemento;
-
 import java.io.*;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class arvoreB<Elemento>{
     private Nodo raiz = null;
@@ -502,9 +503,7 @@ public class arvoreB<Elemento>{
     }
 
     public void printarArvore() {
-//        printarArvore(raiz, "", true);
-        double mediaTarifas = calcularMediaTarifas();
-        System.out.println("Média das Tarifas: " + mediaTarifas);
+        printarArvore(raiz, "", true);
     }
 
     private void printarArvore(Nodo node, String indent, boolean last) {
@@ -526,7 +525,13 @@ public class arvoreB<Elemento>{
             }
         }
     }
+    public void printarMedia(){
+        double mediaTarifas = calcularMediaTarifas();
+        System.out.printf("Média das Tarifas: %.2f%n", mediaTarifas);
+        analisarTarifasAereasEmp(raiz);
+        analisarTarifasAereasAnoMes(raiz);
 
+    }
     public double calcularMediaTarifas() {
         float[] resultado = calcularSomaETotalTarifas(raiz);
         float soma = resultado[0];
@@ -556,6 +561,144 @@ public class arvoreB<Elemento>{
         }
 
         return new float[]{soma, total};
+    }
+
+
+    public void analisarTarifasAereasAnoMes(Nodo node) {
+        // Agrupar elementos por ano e mês
+        Map<Integer, Map<Integer, List<dados.Elemento>>> elementosPorAnoEMes = new HashMap<>();
+
+        // Método auxiliar para processar os nós recursivamente
+        processarNodoRecursivoTime(node, elementosPorAnoEMes);
+
+        // Calcular a média das tarifas por ano e mês
+        Map<String, Double> mediaTarifasPorAnoEMes = new HashMap<>();
+        for (Map.Entry<Integer, Map<Integer, List<dados.Elemento>>> anoEntry : elementosPorAnoEMes.entrySet()) {
+            int ano = anoEntry.getKey();
+            for (Map.Entry<Integer, List<dados.Elemento>> mesEntry : anoEntry.getValue().entrySet()) {
+                int mes = mesEntry.getKey();
+                List<dados.Elemento> elementosDoMes = mesEntry.getValue();
+                double somaTarifas = 0;
+                for (dados.Elemento e : elementosDoMes) {
+                    somaTarifas += e.getTarifa();
+                }
+                double mediaTarifas = somaTarifas / elementosDoMes.size();
+                String anoMesKey = String.format("%d-%02d", ano, mes);
+                mediaTarifasPorAnoEMes.put(anoMesKey, mediaTarifas);
+            }
+        }
+
+        // Encontrar o ano e mês com a tarifa média mais baixa e mais alta
+        String anoMesTarifaMaisBaixa = null;
+        String anoMesTarifaMaisAlta = null;
+        double menorTarifa = Double.MAX_VALUE;
+        double maiorTarifa = Double.MIN_VALUE;
+
+        for (Map.Entry<String, Double> entry : mediaTarifasPorAnoEMes.entrySet()) {
+            String anoMes = entry.getKey();
+            double mediaTarifa = entry.getValue();
+            if (mediaTarifa < menorTarifa) {
+                menorTarifa = mediaTarifa;
+                anoMesTarifaMaisBaixa = anoMes;
+            }
+            if (mediaTarifa > maiorTarifa) {
+                maiorTarifa = mediaTarifa;
+                anoMesTarifaMaisAlta = anoMes;
+            }
+        }
+
+        // Imprimir os resultados
+        System.out.println("Média das tarifas por ano e mês:");
+        for (Map.Entry<String, Double> entry : mediaTarifasPorAnoEMes.entrySet()) {
+            System.out.printf("Ano-Mês: %s, Média de Tarifa: %.2f%n", entry.getKey(), entry.getValue());
+        }
+
+        System.out.printf("\nAno e mês com a tarifa média mais baixa: %s (Tarifa: %.2f)%n", anoMesTarifaMaisBaixa, menorTarifa);
+        System.out.printf("Ano e mês com a tarifa média mais alta: %s (Tarifa: %.2f)%n", anoMesTarifaMaisAlta, maiorTarifa);
+    }
+
+    private void processarNodoRecursivoTime(Nodo node, Map<Integer, Map<Integer, List<dados.Elemento>>> elementosPorAnoEMes) {
+        if (node == null) return;
+
+        for (dados.Elemento elemento : node.getChave()) {
+            int ano = elemento.getAno();
+            int mes = elemento.getMes();
+            elementosPorAnoEMes.computeIfAbsent(ano, k -> new HashMap<>())
+                    .computeIfAbsent(mes, k -> new ArrayList<>())
+                    .add(elemento);
+        }
+
+        for (Nodo filho : node.getFilho()) {
+            processarNodoRecursivoTime(filho, elementosPorAnoEMes);
+        }
+    }
+
+    public void analisarTarifasAereasEmp(Nodo node) {
+        // Agrupar elementos por empresa
+        Map<String, List<dados.Elemento>> elementosPorEmpresa = new HashMap<>();
+
+        // Método auxiliar para processar os nós recursivamente
+        processarNodoRecursivo(node, elementosPorEmpresa);
+
+        // Calcular a média das tarifas por empresa
+        Map<String, Double> mediaTarifasPorEmpresa = new HashMap<>();
+        for (Map.Entry<String, List<dados.Elemento>> entry : elementosPorEmpresa.entrySet()) {
+            String empresa = entry.getKey();
+            List<dados.Elemento> elementosDaEmpresa = entry.getValue();
+            double somaTarifas = 0;
+            for (dados.Elemento e : elementosDaEmpresa) {
+                somaTarifas += e.getTarifa();
+            }
+            double mediaTarifas = somaTarifas / elementosDaEmpresa.size();
+            mediaTarifasPorEmpresa.put(empresa, mediaTarifas);
+        }
+
+        // Encontrar a empresa com a tarifa média mais baixa e mais alta
+        String empresaTarifaMaisBaixa = null;
+        String empresaTarifaMaisAlta = null;
+        double menorTarifa = Double.MAX_VALUE;
+        double maiorTarifa = Double.MIN_VALUE;
+
+        for (Map.Entry<String, Double> entry : mediaTarifasPorEmpresa.entrySet()) {
+            String empresa = entry.getKey();
+            double mediaTarifa = entry.getValue();
+            if (mediaTarifa < menorTarifa) {
+                menorTarifa = mediaTarifa;
+                empresaTarifaMaisBaixa = empresa;
+            }
+            if (mediaTarifa > maiorTarifa) {
+                maiorTarifa = mediaTarifa;
+                empresaTarifaMaisAlta = empresa;
+            }
+        }
+
+        // Imprimir os resultados
+        System.out.println("Média das tarifas por empresa:");
+        for (Map.Entry<String, Double> entry : mediaTarifasPorEmpresa.entrySet()) {
+            System.out.printf("Empresa: %s, Média de Tarifa: %.2f%n", entry.getKey(), entry.getValue());
+        }
+
+        System.out.printf("\nEmpresa com a tarifa média mais baixa: %s (Tarifa: %.2f)%n", empresaTarifaMaisBaixa, menorTarifa);
+        System.out.printf("Empresa com a tarifa média mais alta: %s (Tarifa: %.2f)%n", empresaTarifaMaisAlta, maiorTarifa);
+
+    }
+
+    private void processarNodoRecursivo(Nodo node, Map<String, List<dados.Elemento>> elementosPorEmpresa) {
+        if (node == null) {
+            return;
+        }
+
+        for (dados.Elemento elemento : node.getChave()) {
+            String empresa = elemento.getEmpresa();
+            if (!elementosPorEmpresa.containsKey(empresa)) {
+                elementosPorEmpresa.put(empresa, new ArrayList<>());
+            }
+            elementosPorEmpresa.get(empresa).add(elemento);
+        }
+
+        for (Nodo filho : node.getFilho()) {
+            processarNodoRecursivo(filho, elementosPorEmpresa);
+        }
     }
 
 
